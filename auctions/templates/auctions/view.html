@@ -14,6 +14,7 @@ Auction details
             <div class="col">
                 <h2>Listing Details</h2>
             </div>
+            {% if listing.author != request.user %}
             <div class="col">
                 <form action="{% url 'auctions:watchlist' %}" method="get">
                     {% if not  watchlisted %}
@@ -24,6 +25,7 @@ Auction details
                     {% endif %}
                 </form>
             </div>
+            {% endif %}
         </div>
     </div>
 

@@ -6,7 +6,7 @@ from django.http import HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import render, redirect
 from django.urls import reverse
 import os
-from .models import AuctionListing, User, Bid, Comment
+from .models import AuctionListing, User, Bid, Comment, Watchlist
 from .forms import AuctionListingForm
 
 from django.contrib import messages
