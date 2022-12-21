@@ -1,15 +1,130 @@
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required, permission_required
 from django.db import IntegrityError
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
-from django.urls import reverse
+from django.http import HttpResponseRedirect, HttpResponseForbidden
 
-from .models import User
+from django.shortcuts import render, redirect
+from django.urls import reverse
+import os
+from .models import AuctionListing, User, Bid, Comment
+from .forms import AuctionListingForm
+
+from django.contrib import messages
+from django.contrib.messages import constants
 
 
 def index(request):
-    return render(request, "auctions/index.html")
+    active_listings = AuctionListing.objects.filter(active=True).all()
+    
+    return render(request, "auctions/index.html", context={'active_listings': active_listings})
 
+@login_required(login_url='auctions/login.html')
+def create_listing(request):
+    if request.method == "GET":
+        return render(request, "auctions/create_listing.html", {
+            'form': AuctionListingForm()
+        })
+    if request.method == "POST":
+        form = AuctionListingForm(request.POST, request.FILES)
+        if form.is_valid():
+            new_listing = form.save(commit=False)
+            new_listing.author = request.user
+            new_listing.current_price = new_listing.starting_bid
+            new_listing.save()
+            return redirect(f"/listing_view/{new_listing.id}/")
+        for error in form.errors.values():
+            messages.add_message(request=request, level=constants.ERROR, message=error)
+
+@login_required(login_url='auctions/login.html')
+def edit_listing(request, id):
+    if request.method == 'GET':
+        new_listing = AuctionListing.objects.get(id=id)
+        assert new_listing.author == request.user, HttpResponseForbidden()
+        form = AuctionListingForm(initial={
+            'product': new_listing.product,
+            'photo': new_listing.photo,
+            'description': new_listing.description,
+            'starting_bid': new_listing.starting_bid
+        })
+        return render(request, "auctions/edit_listing.html", {'form': form, 'id':id})
+
+    if request.method == 'POST':
+        listing = AuctionListing.objects.get(id=id)
+        assert new_listing.author == request.user, HttpResponseForbidden()
+        listing.product = request.POST.get('product')
+        listing.starting_bid = request.POST.get('starting_bid')
+        listing.description = request.POST.get('description')
+        listing.current_winner = listing.current_winner
+        if len(request.FILES) == 0:
+            listing.photo = listing.photo
+        else:
+            os.remove(listing.photo.path)
+            listing.photo = request.FILES.get('photo')
+        listing.save()
+        messages.add_message(request, constants.SUCCESS, message="Listing updated.")
+        return redirect(f'/listing_view/{listing.id}/')
+
+def set_bid(request, id):
+    if request.method == 'POST':
+        bid = request.POST.get('bid')
+        listing = AuctionListing.objects.get(id=id)
+        if float(bid) <= listing.current_price:
+            messages.add_message(request, constants.ERROR, message="Bid has to be greater than current price.")
+            return redirect(f'/listing_view/{listing.id}/')
+        listing.current_price = bid
+        listing.current_winner = request.user
+        listing.save()
+        messages.add_message(request, constants.SUCCESS, message="Your bid has been placed!")
+        return redirect(f"/listing_view/{listing.id}")
+
+def listing_view(request, id):
+    listing = AuctionListing.objects.get(id=id)
+    comments = Comment.objects.filter(auction_listing=listing).order_by('date')
+    return render(request, "auctions/view.html", {
+        'listing': listing,
+        'comments': comments,
+    })
+
+def close_auction(request, id):
+    if request.method == 'GET':
+        listing = AuctionListing.objects.get(id=id)
+        if listing.author == request.user and listing.active == True:
+            listing.active = False
+            listing.save()
+            return redirect(f"/listing_view/{listing.id}")
+
+def comment(request, id):
+    if request.method == 'POST':
+        listing = AuctionListing.objects.get(id=id)
+        text = request.POST.get("comment")
+        new_comment = Comment()
+        new_comment.text = text
+        new_comment.auction_listing = listing
+        new_comment.author = request.user
+        new_comment.save()
+        return redirect(f"/listing_view/{listing.id}")
+
+@login_required
+def my_wins(request):
+    if request.method == 'GET':
+        winned_auctions = AuctionListing.objects.filter(active=False, current_winner=request.user)
+        return render(request, "auctions/my_wins.html", {'winned_auctions': winned_auctions})
+
+@login_required
+def watchlist(request):
+    if request.method == 'GET':
+        if not request.GET.get('listing_id'):
+            watchlist = Watchlist.objects.filter(user=request.user).all()
+            return render(request, "auctions/watchlist.html", {'watchlist': watchlist})
+
+        listing = AuctionListing.objects.get(id=request.GET.get('listing_id'))
+        watchlist = Watchlist.objects.filter(user=request.user).all()
+        watchlist.auction_listings.add(listing)
+        watchlist.save()
+        return render(request, "auctions/view.html", {
+            'listing': listing,
+            'watchlisted': True,
+            })
 
 def login_view(request):
     if request.method == "POST":
@@ -22,7 +137,7 @@ def login_view(request):
         # Check if authentication successful
         if user is not None:
             login(request, user)
-            return HttpResponseRedirect(reverse("index"))
+            return HttpResponseRedirect(reverse("auctions:index"))
         else:
             return render(request, "auctions/login.html", {
                 "message": "Invalid username and/or password."
@@ -30,11 +145,9 @@ def login_view(request):
     else:
         return render(request, "auctions/login.html")
 
-
 def logout_view(request):
     logout(request)
-    return HttpResponseRedirect(reverse("index"))
-
+    return HttpResponseRedirect(reverse("auctions:index"))
 
 def register(request):
     if request.method == "POST":
@@ -58,6 +171,6 @@ def register(request):
                 "message": "Username already taken."
             })
         login(request, user)
-        return HttpResponseRedirect(reverse("index"))
+        return HttpResponseRedirect(reverse("auctions:index"))
     else:
         return render(request, "auctions/register.html")
