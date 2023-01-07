@@ -12,6 +12,7 @@ from .forms import AuctionListingForm
 from django.contrib import messages
 from django.contrib.messages import constants
 
+from django.core.exceptions import ObjectDoesNotExist
 
 def index(request):
     active_listings = AuctionListing.objects.filter(active=True).all()
@@ -50,8 +51,9 @@ def edit_listing(request, id):
 
     if request.method == 'POST':
         listing = AuctionListing.objects.get(id=id)
-        assert new_listing.author == request.user, HttpResponseForbidden()
+        assert listing.author == request.user, HttpResponseForbidden()
         listing.product = request.POST.get('product')
+        listing.categorie = request.POST.get('categorie')
         listing.starting_bid = request.POST.get('starting_bid')
         listing.description = request.POST.get('description')
         listing.current_winner = listing.current_winner
@@ -80,9 +82,19 @@ def set_bid(request, id):
 def listing_view(request, id):
     listing = AuctionListing.objects.get(id=id)
     comments = Comment.objects.filter(auction_listing=listing).order_by('date')
+    try:
+        watchlist = Watchlist.objects.get(user=request.user.id)
+        if listing in watchlist.auction_listings.all():
+            watchlisted = True
+        else:
+            watchlisted = False
+    except ObjectDoesNotExist:
+        watchlisted = False
+
     return render(request, "auctions/view.html", {
         'listing': listing,
         'comments': comments,
+        'watchlisted': watchlisted,
     })
 
 def close_auction(request, id):
@@ -110,21 +122,58 @@ def my_wins(request):
         winned_auctions = AuctionListing.objects.filter(active=False, current_winner=request.user)
         return render(request, "auctions/my_wins.html", {'winned_auctions': winned_auctions})
 
-@login_required
+@login_required(login_url='auctions/login.html')
 def watchlist(request):
     if request.method == 'GET':
         if not request.GET.get('listing_id'):
-            watchlist = Watchlist.objects.filter(user=request.user).all()
+            watchlist = Watchlist.objects.get(user=request.user)
             return render(request, "auctions/watchlist.html", {'watchlist': watchlist})
 
         listing = AuctionListing.objects.get(id=request.GET.get('listing_id'))
-        watchlist = Watchlist.objects.filter(user=request.user).all()
-        watchlist.auction_listings.add(listing)
+        watchlist = Watchlist.objects.get(user=request.user.id)
+        if watchlist:
+            # If listing already in watchlist, remove listing from watchlist
+            if listing in watchlist.auction_listings.all():
+                watchlist.auction_listings.remove(listing)
+                watchlist.save()
+                return render(request, "auctions/view.html", {
+                    'listing': listing,
+                    'watchlisted': False,
+                })    
+
+            watchlist.auction_listings.add(listing)
+            watchlist.save()
+            return render(request, "auctions/view.html", {
+                'listing': listing,
+                'watchlisted': True,
+                })
+        auction_listings = AuctionListing.objects.filter(id=request.GET.get('listing_id'))
+        watchlist = Watchlist.objects.create(user=request.user)
+        watchlist.auction_listings.set(auction_listings)
         watchlist.save()
         return render(request, "auctions/view.html", {
-            'listing': listing,
-            'watchlisted': True,
-            })
+                'listing': listing,
+                'watchlisted': True,
+                })
+
+@login_required(login_url='auctions/login.html')
+def view_watchlist(request):
+    watchlist = Watchlist.objects.get(user=request.user.id)
+    return render(request, 'auctions/watchlist.html', {
+        'listings': watchlist.auction_listings.all(),
+    })
+
+def categories(request):
+    categories = [j for (i, j) in AuctionListing.categories_choices]
+    return render(request, 'auctions/categories.html', {
+        'categories': categories,
+    })
+
+def category_list(request, category: str):
+    listings = AuctionListing.objects.filter(categorie=category)
+    return render(request, 'auctions/category_view.html', {
+        'listings': listings
+    })
 
 def login_view(request):
     if request.method == "POST":

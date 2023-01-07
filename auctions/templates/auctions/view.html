@@ -17,11 +17,12 @@ Auction details
             {% if listing.author != request.user %}
             <div class="col">
                 <form action="{% url 'auctions:watchlist' %}" method="get">
-                    {% if not  watchlisted %}
+                    {% if not watchlisted %}
                         <input type="hidden" name="listing_id" value="{{listing.id}}">
                         <button type="submit">add to watchlist</button>
                     {% else %}
-                        <button disabled="disabled">add to watchlist</button>
+                        <input type="hidden" name="listing_id" value="{{listing.id}}">
+                        <button type="submit">remove from watchlist</button>
                     {% endif %}
                 </form>
             </div>
@@ -41,7 +42,9 @@ Auction details
             <h3>You won this auction!</h3>
     {% endif %}
 
-    {{listing.product}} <br>
+    <h3>{{listing.product.capitalize}}</h3> <br>
+    
+    Category: {{listing.categorie}} <br>
     
     Current price: {{listing.current_price}} <br>
 

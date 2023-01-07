@@ -2,36 +2,37 @@
 
 {% block body %}
     <h2>My Watchlist:</h2>
-
-    {% for listing in watchlist %}
-    <a href="{% url 'auctions:listing_view' listing.id %}">
-        <ul>
-            <li>
-                <div class="container">
-                    <div class="row">
-                        <div class="col col-sm">
-                            {{listing.product}}            
-                        </div>
-                        <div class="col col-sm">
-                            {{listing.current_price}}                
-                        </div>
-                        <div class="col col-lg">
-                            {{listing.description}}
-                        </div>
-                        <div class="col col-lg">
-                            {% if listing.photo %}
-                                <img src="{{listing.photo.url}}" alt="" style="max-width: 50%;">
-                            {% else %}
-                                No picture
-                            {% endif %}
-                        </div>
-                        <div class="col col-sm">
-                            {{listing.author}}
+    {% if listings %} 
+        {% for listing in listings %}
+        <a href="{% url 'auctions:listing_view' listing.id %}">
+            <ul>
+                <li>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col col-sm">
+                                {{listing.product}}            
+                            </div>
+                            <div class="col col-sm">
+                                {{listing.current_price}}                
+                            </div>
+                            <div class="col col-lg">
+                                {{listing.description}}
+                            </div>
+                            <div class="col col-lg">
+                                {% if listing.photo %}
+                                    <img src="{{listing.photo.url}}" alt="" style="max-width: 50%;">
+                                {% else %}
+                                    No picture
+                                {% endif %}
+                            </div>
+                            <div class="col col-sm">
+                                {{listing.author}}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </li>
-        </ul>
-    </a>
-    {% endfor %}
+                </li>
+            </ul>
+        </a>
+        {% endfor %}
+    {% endif %}
 {% endblock %}

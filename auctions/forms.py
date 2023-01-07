@@ -10,5 +10,6 @@ class AuctionListingForm(forms.ModelForm):
             'photo',
             'description',
             'starting_bid',
+            'categorie'
             # 'current_price',
         ]
