@@ -130,7 +130,7 @@ def watchlist(request):
             return render(request, "auctions/watchlist.html", {'watchlist': watchlist})
 
         listing = AuctionListing.objects.get(id=request.GET.get('listing_id'))
-        watchlist = Watchlist.objects.get(user=request.user.id)
+        watchlist = Watchlist.objects.filter(user=request.user.id)[0]
         if watchlist:
             # If listing already in watchlist, remove listing from watchlist
             if listing in watchlist.auction_listings.all():

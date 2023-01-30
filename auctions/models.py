@@ -2,6 +2,7 @@ from django.contrib.auth.models import AbstractUser, User
 from django.db import models
 from datetime import datetime
 
+
 # class User(AbstractUser):
 #     username = models.CharField(max_length=150, unique=True)
 #     watchlist = models.ForeignKey(AuctionListing, on_delete=models.CASCADE, related_name='watchlist')
