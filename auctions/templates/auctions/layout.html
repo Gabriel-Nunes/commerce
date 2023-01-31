@@ -3,56 +3,70 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>{% block title %}Auctions{% endblock %}</title>
+        <title>{% block title %}{% endblock %}</title>
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
         <link href="{% static 'auctions/styles.css' %}" rel="stylesheet">
     </head>
     <body>
         <div class="container">
             <div class="row">
-                <div class="label">
-                    <h1>Auctions</h1>
+                <div class="col align-self-end">
+                    {% if user.is_authenticated %}
+                        <span>Signed in as </span>
+                        
+                         <strong> {{ user.username }} </strong>.
+                    {% else %}
+                        Not signed in.
+                    {% endif %}
+                </div>
+                <div class="row">
                 </div>
             </div>
-            <div class="row">
-                {% if user.is_authenticated %}
-                    Signed in as <strong> {{ user.username }} </strong>.
-                {% else %}
-                    Not signed in.
-                {% endif %}
+            <div class="container">
+
+                <nav class="navbar navbar-expand-lg navbar-light bg-ligh">
+                    <a class="navbar-brand" href="{% url 'auctions:index' %}">Auctions</a>
+                    <div class="collapse navbar-collapse" id="navbarText">
+                        
+                        <!-- Navbar content -->
+                        <ul class="navbar-nav mr-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'auctions:index' %}">Active Listings</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'auctions:categories' %}">Categories</a>
+                            </li>
+                            {% if user.is_authenticated %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'auctions:create_listing' %}">Create listing</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'auctions:view_watchlist' %}">Watchlist</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'auctions:my_wins' %}">My wins</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'auctions:logout' %}">Log Out</a>
+                                </li>
+                            {% else %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'auctions:login' %}">Log In</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'auctions:register' %}">Register</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </nav>
             </div>
-        </div>
-        <ul class="nav">
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'auctions:index' %}">Active Listings</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'auctions:categories' %}">Categories</a>
-            </li>
-            {% if user.is_authenticated %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'auctions:create_listing' %}">Create listing</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'auctions:view_watchlist' %}">Watchlist</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'auctions:my_wins' %}">My wins</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'auctions:logout' %}">Log Out</a>
-                </li>
-            {% else %}
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'auctions:login' %}">Log In</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'auctions:register' %}">Register</a>
-                </li>
-            {% endif %}
-        </ul>
+
+            </div>
         <hr>
-        {% block body %}
-        {% endblock %}
+        <div class="container">
+            {% block body %}
+            {% endblock %}
+        </div>
     </body>
 </html>

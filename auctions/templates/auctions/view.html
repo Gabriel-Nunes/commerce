@@ -11,7 +11,7 @@ Auction details
 {% block body %}
     <div class="container">
         <div class="row">
-            <div class="col">
+            <div class="col-sm">
                 <h2>Listing Details</h2>
             </div>
             {% if listing.author != request.user %}
@@ -19,10 +19,10 @@ Auction details
                 <form action="{% url 'auctions:watchlist' %}" method="get">
                     {% if not watchlisted %}
                         <input type="hidden" name="listing_id" value="{{listing.id}}">
-                        <button type="submit">add to watchlist</button>
+                        <button class="btn btn-primary" type="submit">add to watchlist</button>
                     {% else %}
                         <input type="hidden" name="listing_id" value="{{listing.id}}">
-                        <button type="submit">remove from watchlist</button>
+                        <button class="btn btn-danger" type="submit">remove from watchlist</button>
                     {% endif %}
                 </form>
             </div>
@@ -41,79 +41,119 @@ Auction details
     {% if request.user == listing.current_winner and listing.active == False %}
             <h3>You won this auction!</h3>
     {% endif %}
-
-    <h3>{{listing.product.capitalize}}</h3> <br>
-    
-    Category: {{listing.categorie}} <br>
-    
-    Current price: {{listing.current_price}} <br>
-
-    Owner: {{listing.author}} <br>
-    
-    Current winner: 
-    {% if listing.current_winner %}
-        {{listing.current_winner}} <br>
-    {% else %}
-        No bids yet <br> 
-    {% endif %}
-    
-    Description: {{listing.description}} <br>
-
-    Status: 
-    
-    {% if listing.active %}
-            Active <br>
-    {% else %}
-            Inactive <br>
-    {% endif %}
-
-    {% if listing.photo %}
-        <img src="{{listing.photo.url}}" alt="" style="max-width: 50%;"><br>
-    {% endif %}
-    
-    {% if request.user == listing.author and listing.active == True %}
-        <a class="btn btn-secondary" href="{% url 'auctions:edit_listing' listing.id %}">
-            Edit
-        </a>
-        
-        <!-- Close Auction Modal -->
-        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#closeAuctionModal">
-            Close Auction
-        </button>
-        <div class="modal fade" id="closeAuctionModal" tabindex="-1" role="dialog" aria-labelledby="closeAuctionModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                <h5 class="modal-title" id="closeAuctionModalLabel">Are you sure to close this auction?</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-                </div>
-                <div class="modal-body">
-                Winner: {{listing.current_winner}} <br>
-                Price: {{listing.current_price}}
-                </div>
-
-                <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <a class="btn btn-danger" href="{% url 'auctions:close_auction' listing.id %}">Finish this auction</a>
-                </div>
-            </div>
-            </div>
-        </div>
-        
-    {% else %}
-        {% if request.user.is_authenticated and listing.active == True %}
-            <form action="{% url 'auctions:set_bid' listing.id %}" method="post">
-                {% csrf_token %}
-                <h4>Set a Bid:</h2>
-                    <input type="number" min="{{listing.current_price}}" step="any" name="bid" placeholder="{{listing.current_price}}">
-                    <button class="btn btn-secondary" type="submit">
-                        Set bid
-                    </button>
-            </form>
+    <br>        
+    <div class="container">
+        <table>
+            <thead>
+                <tr>
+                    <h3>{{listing.product.capitalize}}</h3> <br>
+                </tr>
+            </thead>
+                <tr>
+                    <th>
+                        Category:
+                    </th>
+                    <td>{{listing.categorie}}</td>
+                </tr>
+                <tr>
+                    <th>
+                        Current price:
+                    </th>
+                    <td>{{listing.current_price}}</td>
+                </tr>
+                <tr>
+                    <th>
+                        Owner:
+                    </th>
+                    <td>{{listing.author}}</td>
+                </tr>
+                <tr>
+                    <th>
+                        Current winner:
+                    </th>
+                    <td>
+                        {% if listing.current_winner %}
+                            {{listing.current_winner}} <br>
+                        {% else %}
+                            No bids yet <br> 
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Description:
+                    </th>
+                    <td>
+                        {{listing.description}}
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        Status:
+                    </th>
+                    <td>
+                        {% if listing.active %}
+                                Active <br>
+                        {% else %}
+                                Inactive <br>
+                        {% endif %}
+                    </td>
+                </tr>
+        </table>
+    </div>
+    <br>
+    <div class="container">
+        {% if listing.photo %}
+            <img class="rounded-lg" src="{{listing.photo.url}}" alt="" style="max-width: 30%;"><br>
         {% endif %}
-    {% endif %}
+    </div>
+    <br>
+    <div class="container">
+
+        {% if request.user == listing.author and listing.active == True %}
+            <a class="btn btn-secondary" href="{% url 'auctions:edit_listing' listing.id %}">
+                Edit
+            </a>
+            
+            <!-- Close Auction Modal -->
+            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#closeAuctionModal">
+                Close Auction
+            </button>
+            <div class="modal fade" id="closeAuctionModal" tabindex="-1" role="dialog" aria-labelledby="closeAuctionModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="closeAuctionModalLabel">Are you sure to close this auction?</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    </div>
+                    <div class="modal-body">
+                    Winner: {{listing.current_winner}} <br>
+                    Price: {{listing.current_price}}
+                    </div>
+    
+                    <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <a class="btn btn-danger" href="{% url 'auctions:close_auction' listing.id %}">Finish this auction</a>
+                    </div>
+                </div>
+                </div>
+            </div>
+            
+        {% else %}
+            {% if request.user.is_authenticated and listing.active == True %}
+                <form action="{% url 'auctions:set_bid' listing.id %}" method="post">
+                    {% csrf_token %}
+                    <h4>Set a Bid:</h2>
+                        <input type="number" min="{{listing.current_price}}" step="any" name="bid" placeholder="{{listing.current_price}}">
+                        <button class="btn btn-secondary" type="submit">
+                            Set bid
+                        </button>
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
     
 <!-- Comments -->
 <div class="container">
