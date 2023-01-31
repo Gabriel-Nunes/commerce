@@ -3,10 +3,10 @@
 {% block body %}
     <h2>Active Listings</h2>
 
+    <ul class="list-group">
     {% for listing in active_listings %}
     <a href="{% url 'auctions:listing_view' listing.id %}">
-        <ul>
-            <li>
+            <li class="list-group-item">
                 <div class="container">
                     <div class="row">
                         <div class="col col-sm">
