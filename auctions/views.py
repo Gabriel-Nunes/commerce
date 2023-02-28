@@ -130,7 +130,10 @@ def watchlist(request):
             return render(request, "auctions/watchlist.html", {'watchlist': watchlist})
 
         listing = AuctionListing.objects.get(id=request.GET.get('listing_id'))
-        watchlist = Watchlist.objects.filter(user=request.user.id)[0]
+        try:
+            watchlist = Watchlist.objects.get(user=request.user.id)
+        except:
+            watchlist = ''
         if watchlist:
             # If listing already in watchlist, remove listing from watchlist
             if listing in watchlist.auction_listings.all():
@@ -147,9 +150,9 @@ def watchlist(request):
                 'listing': listing,
                 'watchlisted': True,
                 })
-        auction_listings = AuctionListing.objects.filter(id=request.GET.get('listing_id'))
+        auction_listing = AuctionListing.objects.get(id=request.GET.get('listing_id'))
         watchlist = Watchlist.objects.create(user=request.user)
-        watchlist.auction_listings.set(auction_listings)
+        watchlist.auction_listings.add(auction_listing)
         watchlist.save()
         return render(request, "auctions/view.html", {
                 'listing': listing,
